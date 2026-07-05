@@ -1,0 +1,144 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "schemaVersion": 39,
+  "version": 1,
+  "title": "Shigoto",
+  "tags": ["shigoto", "jobs"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "",
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {"type": "row", "title": "Throughput", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}, "id": 100, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Jobs / min by outcome",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 1}, "id": 1,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {"expr": "sum(rate(shigoto_jobs_completed_total[$__rate_interval])) * 60", "legendFormat": "completed", "refId": "A"},
+        {"expr": "sum(rate(shigoto_jobs_failed_total[$__rate_interval])) * 60", "legendFormat": "failed", "refId": "B"},
+        {"expr": "sum(rate(shigoto_jobs_discarded_total[$__rate_interval])) * 60", "legendFormat": "discarded", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Enqueue vs complete / min",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 1}, "id": 2,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {"expr": "sum(rate(shigoto_jobs_inserted_total[$__rate_interval])) * 60", "legendFormat": "inserted", "refId": "A"},
+        {"expr": "sum(rate(shigoto_jobs_completed_total[$__rate_interval])) * 60", "legendFormat": "completed", "refId": "B"}
+      ]
+    },
+    {
+      "type": "stat", "title": "Failure rate (5m)",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 9}, "id": 3,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "percentunit", "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.05}, {"color": "red", "value": 0.2}]}}},
+      "targets": [{"expr": "sum(rate(shigoto_jobs_failed_total[5m])) / clamp_min(sum(rate(shigoto_jobs_completed_total[5m])) + sum(rate(shigoto_jobs_failed_total[5m])), 1)", "refId": "A"}],
+      "options": {"colorMode": "value", "graphMode": "area", "textMode": "auto"}
+    },
+    {
+      "type": "stat", "title": "Discarded (5m)",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 9}, "id": 4,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum(increase(shigoto_jobs_discarded_total[5m]))", "refId": "A"}],
+      "options": {"colorMode": "value", "graphMode": "area", "textMode": "auto"}
+    },
+    {
+      "type": "stat", "title": "Testing mode armed",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 9}, "id": 5,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}},
+      "targets": [{"expr": "sum(shigoto_testing_mode_armed_total)", "refId": "A"}],
+      "options": {"colorMode": "background", "graphMode": "none", "textMode": "auto"}
+    },
+    {"type": "row", "title": "Latency", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 13}, "id": 101, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Job duration (seconds)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}, "id": 6,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum(rate(shigoto_job_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p50", "refId": "A"},
+        {"expr": "histogram_quantile(0.95, sum(rate(shigoto_job_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p95", "refId": "B"},
+        {"expr": "histogram_quantile(0.99, sum(rate(shigoto_job_duration_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Queue wait (seconds)",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}, "id": 7,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum(rate(shigoto_job_queue_wait_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p95", "refId": "A"},
+        {"expr": "histogram_quantile(0.99, sum(rate(shigoto_job_queue_wait_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p99", "refId": "B"}
+      ]
+    },
+    {"type": "row", "title": "Queues", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 22}, "id": 102, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Polls / min by queue",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 23}, "id": 8,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum by (queue) (rate(shigoto_queue_polls_total[$__rate_interval])) * 60", "legendFormat": "{{queue}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries", "title": "Claimed / min by queue",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 23}, "id": 9,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum by (queue) (rate(shigoto_jobs_claimed_total[$__rate_interval])) * 60", "legendFormat": "{{queue}}", "refId": "A"}]
+    },
+    {"type": "row", "title": "Resilience", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 31}, "id": 103, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Resilience snoozes / min",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 32}, "id": 10,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [
+        {"expr": "sum(rate(shigoto_resilience_rate_limited_total[$__rate_interval])) * 60", "legendFormat": "rate_limited", "refId": "A"},
+        {"expr": "sum(rate(shigoto_resilience_circuit_open_total[$__rate_interval])) * 60", "legendFormat": "circuit_open", "refId": "B"},
+        {"expr": "sum(rate(shigoto_resilience_bulkhead_full_total[$__rate_interval])) * 60", "legendFormat": "bulkhead_full", "refId": "C"}
+      ]
+    },
+    {
+      "type": "timeseries", "title": "Load shed / min by priority",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 32}, "id": 11,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum by (priority) (rate(shigoto_resilience_load_shed_total[$__rate_interval])) * 60", "legendFormat": "p{{priority}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries", "title": "Rate-limit backoff (seconds)",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 32}, "id": 14,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [{"expr": "histogram_quantile(0.95, sum(rate(shigoto_resilience_retry_after_seconds_bucket[$__rate_interval])) by (le))", "legendFormat": "p95", "refId": "A"}]
+    },
+    {"type": "row", "title": "Lifecycle & schedule", "gridPos": {"h": 1, "w": 24, "x": 0, "y": 40}, "id": 104, "collapsed": false, "panels": []},
+    {
+      "type": "timeseries", "title": "Snoozed / min by reason",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 41}, "id": 12,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum by (reason) (rate(shigoto_jobs_snoozed_total[$__rate_interval])) * 60", "legendFormat": "{{reason}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries", "title": "Cron scheduled / min",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 41}, "id": 13,
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "targets": [{"expr": "sum by (name) (rate(shigoto_cron_scheduled_total[$__rate_interval])) * 60", "legendFormat": "{{name}}", "refId": "A"}]
+    }
+  ]
+}

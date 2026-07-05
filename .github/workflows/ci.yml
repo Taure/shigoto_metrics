@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+jobs:
+  ci:
+    uses: Taure/erlang-ci/.github/workflows/ci.yml@v2.1.1
+    permissions:
+      contents: write
+      pull-requests: write
+    with:
+      version-file: '.tool-versions'
+      enable-ct: true
+      enable-ex-doc: true
+      enable-hank: true
+      enable-audit: true
+      enable-coverage: true
+      # ELP has no OTP 29 binary yet (matches the pillar repos); re-enable when
+      # WhatsApp/erlang-language-platform ships an OTP 29 build.
+      enable-elp-lint: false
+      enable-elp-eqwalize: false
+      enable-sbom: true
+      enable-sbom-scan: true
+      enable-dependency-submission: true
+      enable-summary: true
