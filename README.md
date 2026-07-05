@@ -34,7 +34,7 @@ index(_Req) ->
 wired into your routes:
 
 ```erlang
-{"/metrics", {metrics_controller, index}, #{methods => [get]}}
+{"/metrics", fun metrics_controller:index/1, #{methods => [get]}}
 ```
 
 Reusing your existing Nova listener means the endpoint sits behind whatever auth

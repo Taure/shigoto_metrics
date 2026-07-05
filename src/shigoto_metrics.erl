@@ -19,7 +19,7 @@ index(_Req) ->
         shigoto_metrics:scrape()}.
 ```
 
-then route `{"/metrics", {metrics_controller, index}, #{methods => [get]}}`.
+then route `{"/metrics", fun metrics_controller:index/1, #{methods => [get]}}`.
 
 If you are not on Nova, mount `prometheus_cowboy2_handler` on your own Cowboy
 listener, or return `scrape/0` from whatever handler you already run. Enabling
